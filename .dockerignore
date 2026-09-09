@@ -1,0 +1,11 @@
+.git
+.gitignore
+.dockerignore
+.agents
+.gemini
+README.md
+*.md
+.env
+.env.local
+node_modules
+docker-compose*.yml

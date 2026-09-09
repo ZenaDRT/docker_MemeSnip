@@ -1,0 +1,95 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // Helper Functions
+    // =========================================================================
+
+    // Checks if the request is made by an authenticated Firebase user
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Checks if the authenticated user's UID exists as a document ID in the 'admins' collection
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Validates required schema fields and constraints when creating a new meme document
+    function isValidMemeCreate() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['title', 'category', 'mediaUrl', 'uploader', 'uploaderAvatar', 'createdAt', 'likes', 'downloads'])
+        // Enforce non-empty string types for creator attribution and media
+        && data.uploader is string && data.uploader.size() > 0
+        && data.uploaderAvatar is string && data.uploaderAvatar.size() > 0
+        && data.title is string && data.title.size() > 0
+        && data.mediaUrl is string && data.mediaUrl.size() > 0
+        && data.category is string && data.category.size() > 0
+        // Counter types
+        && data.likes is number
+        && data.downloads is number
+        // Server timestamp enforcement: prevent client-side fabricated or backdated timestamps
+        && data.createdAt == request.time
+        // Schema lock: explicitly disallow 'displayName' in memes documents
+        && !('displayName' in data)
+        // Ensure tags is a list if provided
+        && (!('tags' in data) || data.tags is list);
+    }
+
+    // =========================================================================
+    // 1. Memes Collection (/memes/{memeId})
+    // =========================================================================
+    match /memes/{memeId} {
+      // 1. Public Read: Anyone (including unauthenticated visitors) can read memes
+      allow read: if true;
+
+      // 2. Authenticated Create: Only logged-in users can publish memes conforming to the schema
+      allow create: if isSignedIn() && isValidMemeCreate();
+
+      // 3. Admin-Only Update & Delete: Only users with verified UID in 'admins' collection can edit or delete memes
+      allow update, delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // 2. Admins Collection Lockdown (/admins/{adminId})
+    // =========================================================================
+    match /admins/{adminId} {
+      // Self-read only: a signed-in user may read their own admin document
+      // to verify their role/displayName after login — never another admin's.
+      allow read: if isSignedIn() && request.auth.uid == adminId;
+
+      // No client may ever write to this collection — admin status is
+      // granted manually via the Firebase Console only.
+      allow write: if false;
+    }
+
+    // =========================================================================
+    // 3. Admin Audit Logs Collection (/admin_logs/{logId})
+    // =========================================================================
+    match /admin_logs/{logId} {
+      // 1. Admin-Only Read: Only verified administrators can view audit logs
+      allow read: if isAdmin();
+
+      // 2. Admin-Only Create: Verified administrators can log actions, constrained to their own UID
+      allow create: if isAdmin()
+        && request.resource.data.adminUID == request.auth.uid
+        && request.resource.data.action in ['update', 'delete']
+        && request.resource.data.memeID is string
+        && request.resource.data.title is string
+        && request.resource.data.timestamp == request.time;
+
+      // 3. Immutability: Audit log entries can never be modified or deleted by any client
+      allow update, delete: if false;
+    }
+
+    // =========================================================================
+    // 4. Default Deny Fallback
+    // =========================================================================
+    match /{document=**} {
+      // Default-Deny: Any collection or document not explicitly matched above is inaccessible
+      allow read, write: if false;
+    }
+  }
+}

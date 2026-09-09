@@ -1,0 +1,11 @@
+# Environment files
+.env
+.env.local
+
+# IDE & OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.agents/
+.gemini/

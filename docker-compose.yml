@@ -1,0 +1,21 @@
+services:
+  memesnip:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: memesnip-app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:80"
+    volumes:
+      - ./memes:/var/www/html/memes
+      - ./avatars:/var/www/html/avatars
+    environment:
+      - APACHE_RUN_USER=www-data
+      - APACHE_RUN_GROUP=www-data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

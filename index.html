@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MemeSnip - Ultimate Meme Sharing & Snipping Hub</title>
+  <meta name="description"
+    content="Discover, snip, upload, and download high quality image, GIF, and video memes seamlessly with MemeSnip." />
+
+  <!-- Favicon -->
+  <link rel="icon" href="icon.jpg" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="modals.css" />
+
+  <!-- Firebase ESM Import Map for Browser Resolution -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+</head>
+
+<body>
+
+  <!-- ========================================================================
+       App Header (Figma Blueprint: Red Logo Mark + MemeSnip + Search + User)
+       ======================================================================== -->
+  <header class="app-header">
+    <div class="header-left">
+      <a href="#" class="brand-logo" title="MemeSnip Home">
+        <div class="logo-badge">
+          <img src="icon.jpg" alt="MemeSnip Logo" />
+        </div>
+        <span class="brand-title">MemeSnip</span>
+      </a>
+    </div>
+
+    <!-- Center Search Bar -->
+    <div class="header-center">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search memes, tags, creators..."
+          autocomplete="off" spellcheck="false" />
+        <button id="searchClear" class="search-clear-btn" title="Clear Search">✕</button>
+      </div>
+    </div>
+
+    <!-- Right Header Controls -->
+    <div class="header-right">
+      <div class="header-stat-pill" title="Total memes in catalog">
+        <span>Memes:</span>
+        <span class="num" id="userStatMemeCount">10</span>
+      </div>
+
+      <!-- User Menu Wrapper -->
+      <div class="user-menu-wrapper">
+        <button id="avatarBtn" class="avatar-btn" title="Account Menu" aria-haspopup="true">
+          <img id="headerAvatarImg" src="avatar.jpg" alt="ぜなっち" />
+          <span class="online-indicator"></span>
+        </button>
+
+        <!-- Dropdown Menu (Figma Blueprint Items: Profile, Settings, About, Sign Out) -->
+        <div id="profileDropdown" class="profile-dropdown" role="menu">
+          <div class="dropdown-user-info">
+            <div id="dropdownUsername" class="dropdown-username">ぜなっち</div>
+            <div id="dropdownRole" class="dropdown-user-role">Active Creator</div>
+          </div>
+
+          <button id="dropdownItemProfile" class="dropdown-item" role="menuitem">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Profile</span>
+          </button>
+
+          <button id="dropdownItemAbout" class="dropdown-item" role="menuitem">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span>About</span>
+          </button>
+
+          <button id="dropdownItemAuthAction" class="dropdown-item danger" role="menuitem">
+            <svg viewBox="0 0 24 24">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span id="authActionText">Sign Out</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       Category Filter Nav Section (Pill Buttons: Images, Videos, GIF's, Upload, About)
+       ======================================================================== -->
+  <section class="filter-nav-section">
+    <div class="pill-container">
+      <button class="filter-pill" data-filter="all" id="pillAll">
+        <span>All</span>
+        <span class="pill-count" id="countAll">10</span>
+      </button>
+
+      <!-- Active by default matching Figma Blueprint -->
+      <button class="filter-pill active" data-filter="images" id="pillImages">
+        <span>Images</span>
+        <span class="pill-count" id="countImages">4</span>
+      </button>
+
+      <button class="filter-pill" data-filter="videos" id="pillVideos">
+        <span>Videos</span>
+        <span class="pill-count" id="countVideos">3</span>
+      </button>
+
+      <button class="filter-pill" data-filter="gifs" id="pillGifs">
+        <span>GIF's</span>
+        <span class="pill-count" id="countGifs">3</span>
+      </button>
+
+      <!-- Special Action Pills -->
+      <button class="filter-pill pill-upload" id="pillUpload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Upload</span>
+      </button>
+
+      <button class="filter-pill" id="pillAbout">
+        <span>About</span>
+      </button>
+    </div>
+
+    <!-- Feed Controls / Sorting -->
+    <div class="feed-controls">
+      <div class="sort-select-wrapper">
+        <select id="sortSelect" class="sort-select" title="Sort Memes">
+          <option value="newest">⚡ Newest First</option>
+          <option value="likes">❤️ Most Liked</option>
+          <option value="downloads">⬇️ Most Downloaded</option>
+        </select>
+        <svg class="sort-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       Main Meme Showcase (Blueprint Rounded Card Container)
+       ======================================================================== -->
+  <main class="main-content">
+    <div class="meme-board-container">
+      <div id="uploaderFilterBanner" class="uploader-filter-banner" style="display: none;">
+        <span id="uploaderFilterBannerText"></span>
+        <button id="uploaderFilterBannerClear" class="uploader-filter-clear-btn" type="button">Clear</button>
+      </div>
+      <div id="memeGrid" class="meme-grid">
+        <!-- Rendered dynamically by js/ui.js -->
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       Footer
+       ======================================================================== -->
+  <footer class="app-footer">
+    <div class="footer-left">
+      <span class="footer-brand">MemeSnip</span>
+      <span>&copy; 2026. Built for effortless meme curation & downloads.</span>
+    </div>
+    <div class="footer-links">
+      <a href="#" onclick="window.ui.openModal('aboutModal'); return false;">API Docs</a>
+      <a href="#" onclick="window.ui.openModal('uploadModal'); return false;">Submit Meme</a>
+    </div>
+  </footer>
+
+  <!-- ========================================================================
+       MODAL 1: Upload Modal (Image, GIF, Video)
+       ======================================================================== -->
+  <div id="uploadModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <span>Upload New Meme</span>
+        </div>
+        <button class="btn-close-modal" onclick="window.ui.closeModal('uploadModal')" title="Close">✕</button>
+      </div>
+
+      <form id="uploadMemeForm">
+        <div class="modal-body">
+          <!-- Dropzone -->
+          <div id="uploadDropzone" class="dropzone">
+            <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+            </svg>
+            <div class="dropzone-text">Drag & drop your meme file here, or click to browse</div>
+            <div class="dropzone-hint">Supports PNG, JPG, WebP, GIF, and MP4/WebM videos (Up to 50MB)</div>
+            <input type="file" id="fileInput" accept="image/*,video/*" />
+          </div>
+
+          <!-- Preview -->
+          <div id="uploadPreviewContainer" class="upload-preview-container">
+            <button type="button" id="btnRemovePreview" class="btn-remove-preview" title="Remove Media"
+              aria-label="Remove media">✕</button>
+            <div id="uploadPreviewMedia" class="upload-preview-media-wrapper"></div>
+          </div>
+
+          <!-- Form Fields -->
+          <div class="form-group">
+            <label class="form-label" for="memeTitleInput">
+              <span>Meme Title <span class="req">*</span></span>
+            </label>
+            <input type="text" id="memeTitleInput" class="form-input"
+              placeholder="e.g. When the unit tests finally pass..." required />
+          </div>
+
+          <!-- Category Selector -->
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <div class="category-radio-group">
+              <label class="category-radio-btn selected">
+                <input type="radio" name="memeCategory" value="image" checked />
+                <span>🖼️ Image</span>
+              </label>
+              <label class="category-radio-btn">
+                <input type="radio" name="memeCategory" value="video" />
+                <span>🎥 Video</span>
+              </label>
+              <label class="category-radio-btn">
+                <input type="radio" name="memeCategory" value="gif" />
+                <span>🌀 GIF</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="form-group">
+            <label class="form-label" for="memeTagsInput">Tags (comma separated)</label>
+            <input type="text" id="memeTagsInput" class="form-input"
+              placeholder="e.g. coding, humor, friday, relathable" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="window.ui.closeModal('uploadModal')">Cancel</button>
+          <button type="submit" class="btn-primary">
+            <span>Publish Meme</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 2: Auth / Login / Sign Up Modal
+       ======================================================================== -->
+  <div id="authModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+            <polyline points="10 17 15 12 10 7"></polyline>
+            <line x1="15" y1="12" x2="3" y2="12"></line>
+          </svg>
+          <span>Account Access</span>
+        </div>
+        <button class="btn-close-modal" onclick="window.ui.closeModal('authModal')" title="Close">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="auth-tabs">
+          <button class="auth-tab-btn active" data-mode="login">Sign In</button>
+          <button class="auth-tab-btn" data-mode="register">Create Account</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="form-group">
+            <label class="form-label" for="loginUsername">Username or Email</label>
+            <input type="text" id="loginUsername" class="form-input" placeholder="Enter username..." required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" value="demo1234"
+              required />
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 8px;">Sign In</button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" style="display: none; flex-direction: column; gap: 16px;">
+          <div class="form-group">
+            <label class="form-label" for="regUsername">Choose Username</label>
+            <input type="text" id="regUsername" class="form-input" placeholder="e.g. MemeMaster99" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regEmail">Email Address</label>
+            <input type="email" id="regEmail" class="form-input" placeholder="name@example.com" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regPassword">Password</label>
+            <input type="password" id="regPassword" class="form-input" placeholder="At least 6 characters" required />
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 8px;">Create Account</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 3: User Profile Modal
+       ======================================================================== -->
+  <div id="profileModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0 4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>User Profile</span>
+        </div>
+        <button class="btn-close-modal" onclick="window.ui.closeModal('profileModal')" title="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="profile-card-header">
+          <div class="avatar-edit-wrap">
+            <img id="profileModalAvatar" class="profile-big-avatar" src="avatar.jpg" alt="ぜなっち" />
+            <button id="changeAvatarBtn" class="change-avatar-btn" type="button" title="Change profile picture" style="display: none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </button>
+            <input type="file" id="avatarUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;" />
+          </div>
+          <div>
+            <h3 id="profileModalName" style="font-size: 1.3rem; font-weight: 700;">ぜなっち</h3>
+            <p id="profileModalEmail" style="color: var(--text-muted); font-size: 0.85rem;">zenacchi@memesnip.io</p>
+          </div>
+        </div>
+
+        <div class="profile-stats-grid">
+          <div class="profile-stat-box profile-stat-box-clickable" id="profileStatUploadsBox" role="button" tabindex="0" title="View your uploaded memes">
+            <div class="stat-number" id="profileStatUploads">0</div>
+            <div class="stat-title">Uploads</div>
+          </div>
+
+          <div class="profile-stat-box">
+            <div class="stat-number" id="profileStatLikes">0</div>
+            <div class="stat-title">Likes Received</div>
+          </div>
+
+          <div class="profile-stat-box">
+            <div class="stat-number" id="profileStatDownloads">0</div>
+            <div class="stat-title">Downloads</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="window.ui.closeModal('profileModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 5: About Modal
+       ======================================================================== -->
+  <div id="aboutModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>About MemeSnip</span>
+        </div>
+        <button class="btn-close-modal" onclick="window.ui.closeModal('aboutModal')" title="Close">✕</button>
+      </div>
+      <div class="modal-body about-modal-body">
+        <p class="about-intro"><strong>MemeSnip</strong> is a high-speed interactive meme sharing platform engineered
+          for lightning fast snips, uploads, and clean downloads.</p>
+
+        <h4 class="about-features-title">🌟 Key Architecture Features:</h4>
+        <ul class="about-feature-list">
+          <li class="about-feature-item">
+            <strong>Non-Interactive Video Engine</strong>
+            Clean video playback with custom overlay, protected from timeline scrubbing and context menus, accompanied
+            by one-click direct downloading.
+          </li>
+          <li class="about-feature-item">
+            <strong>Static InfinityFree Architecture</strong>
+            Zero-build browser-native ES module imports via official Google Firebase CDN with no Node.js production
+            runtime required.
+          </li>
+          <li class="about-feature-item">
+            <strong>Real-time Cloud Firestore</strong>
+            Fast, responsive catalog retrieval, category filtering, persistent likes counter, and search indexing.
+          </li>
+          <li class="about-feature-item">
+            <strong>Modern Dark Aesthetic</strong>
+            Designed directly from your Figma blueprint with refined dark slate surfaces and vibrant fiery accents.
+          </li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" onclick="window.ui.closeModal('aboutModal')">Awesome!</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mediaPreviewModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-dialog media-preview-dialog">
+      <div class="media-preview-wrap">
+        <button class="media-preview-close" onclick="window.ui.closeModal('mediaPreviewModal')" title="Close">✕</button>
+        <div class="media-preview-media" id="mediaPreviewBody"></div>
+      </div>
+      <div class="media-preview-actions">
+        <button id="mediaPreviewViewBtn" class="btn-primary" onclick="window.ui.viewSharedMemeOnSite()">View on MemeSnip</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       Toast Notification System
+       ======================================================================== -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- Scripts in dependency order (ES Modules + Vanilla Controllers) -->
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="authService.js"></script>
+  <script type="module" src="memeService.js"></script>
+  <script src="videoPlayer.js"></script>
+  <script src="ui.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+
+</html>

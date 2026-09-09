@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MemeSnip Admin — Control Center</title>
+  <meta name="description" content="Protected administrative portal for MemeSnip." />
+
+  <!-- Favicon -->
+  <link rel="icon" href="../icon.jpg" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+
+  <!-- Base Styles & Admin Styles -->
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="stylesheet" href="../modals.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+
+<body class="admin-body">
+
+  <!-- ========================================================================
+       Admin Header Navbar
+       ======================================================================== -->
+  <header class="admin-header">
+    <div class="admin-header-left">
+      <a href="../index.html" class="brand-logo" title="Back to Public Site">
+        <div class="logo-badge">
+          <img src="../icon.jpg" alt="MemeSnip Logo" />
+        </div>
+        <span class="brand-title">MemeSnip</span>
+      </a>
+      <span class="admin-portal-badge">ADMIN</span>
+    </div>
+
+    <div class="admin-header-right">
+      <a href="../index.html" class="btn-public-link" title="Open Main Website">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+        <span>Public Site</span>
+      </a>
+
+      <!-- Admin User Chip (Shown when authorized) -->
+      <div id="adminUserChip" class="admin-user-chip" style="display: none;">
+        <div class="admin-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <div class="admin-meta">
+          <span id="headerAdminUsername" class="admin-username">Admin</span>
+          <span id="headerAdminRole" class="admin-role-tag">Administrator</span>
+        </div>
+        <button id="btnHeaderSignOut" class="btn-admin-signout" title="Sign Out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       Main Content Container
+       ======================================================================== -->
+  <main class="admin-main">
+
+    <!-- Loading State Overlay -->
+    <div id="adminAuthLoader" class="admin-loader-container">
+      <div class="admin-spinner"></div>
+      <p>Verifying administrative credentials...</p>
+    </div>
+
+    <!-- VIEW 1: Admin Login Card -->
+    <section id="adminLoginSection" class="admin-login-section" style="display: none;">
+      <div class="admin-login-card">
+        <div class="login-card-header">
+          <div class="admin-shield-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <h2>Admin Portal</h2>
+          <p>Restricted access. Only registered administrators may proceed.</p>
+        </div>
+
+        <!-- Alert Notification Box -->
+        <div id="loginAlertBox" class="admin-alert" style="display: none;">
+          <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span id="loginAlertMessage">Access denied. Administrator account required.</span>
+        </div>
+
+        <form id="adminLoginForm" class="admin-login-form">
+          <div class="form-group">
+            <label class="form-label" for="adminEmail">
+              <span>Admin Email</span>
+            </label>
+            <div class="input-icon-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <input type="email" id="adminEmail" class="form-input with-icon" placeholder="admin@memesnip.com" required
+                autocomplete="email" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="adminPassword">
+              <span>Password</span>
+            </label>
+            <div class="input-icon-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <input type="password" id="adminPassword" class="form-input with-icon" placeholder="••••••••" required
+                autocomplete="current-password" />
+            </div>
+          </div>
+
+          <button type="submit" id="btnAdminSignIn" class="btn-admin-submit">
+            <span class="btn-text">Sign In</span>
+          </button>
+        </form>
+
+        <div class="login-card-footer">
+          <a href="../index.html" class="return-public-link">← Return to public website</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: Admin Dashboard (Protected Placeholder) -->
+    <section id="adminDashboardSection" class="admin-dashboard-section" style="display: none;">
+
+      <!-- Welcome Hero Banner -->
+      <div class="admin-welcome-banner">
+        <div class="welcome-text">
+          <div class="welcome-badge">
+            <span class="pulse-dot"></span>
+            <span>SYSTEM ONLINE</span>
+          </div>
+          <h1>MemeSnip Admin Dashboard</h1>
+          <p>Welcome back, <strong id="dashAdminName">Administrator</strong>. Security clearance confirmed.</p>
+        </div>
+        <div class="welcome-actions">
+          <button id="btnDashSignOut" class="btn-secondary" title="Log out of admin session">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              style="width: 16px; height: 16px;">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="admin-stats-grid">
+        <!-- Stat Card 1: Total Memes -->
+        <div class="admin-stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Total Memes</span>
+            <div class="stat-icon-badge fire">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-number" id="dashTotalMemes">--</div>
+          <div class="stat-footer">
+            <span class="stat-sub">Live Firestore Catalog</span>
+          </div>
+        </div>
+
+        <!-- Stat Card 2: Total Users (Placeholder) --> <!-- Stat Card 2: Unique Uploaders -->
+        <div class="admin-stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Unique Uploaders</span>
+            <div class="stat-icon-badge blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-number" id="dashTotalUsers">--</div>
+          <div class="stat-footer">
+            <span class="stat-sub">Distinct meme contributors</span>
+          </div>
+        </div>
+
+        <!-- Stat Card 3: Security & Role -->
+        <div class="admin-stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Role Access</span>
+            <div class="stat-icon-badge purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-number role" id="dashAdminRole">Administrator</div>
+          <div class="stat-footer">
+            <span class="stat-sub">Firestore `admins` record verified</span>
+          </div>
+        </div>
+
+        <!-- Stat Card 4: Status -->
+        <div class="admin-stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">System Status</span>
+            <div class="stat-icon-badge green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-number green">Online</div>
+          <div class="stat-footer">
+            <span class="stat-sub">Auth & Firestore connected</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Moderation Queue Section (Phase 2) -->
+      <div class="admin-moderation-panel">
+        <div class="moderation-panel-header">
+          <div class="panel-header-left">
+            <div class="moderation-title-row">
+              <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="9" y1="21" x2="9" y2="9"></line>
+              </svg>
+              <h2>Moderation Queue</h2>
+              <span id="queueCountBadge" class="queue-badge">0 items</span>
+            </div>
+            <p>Live Firestore meme catalog. Review documents, media formats, upload dates, and creator attributions.</p>
+          </div>
+
+          <!-- Controls: Search, Category Filter, Sort Filter, Refresh (Phase 3) -->
+          <div class="panel-header-controls">
+            <div class="queue-search-box">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="queueSearchInput" class="queue-search-input"
+                placeholder="Search memes, creators, categories..." />
+              <button id="queueSearchClear" class="queue-clear-btn" title="Clear">✕</button>
+            </div>
+
+            <div class="queue-filter-select-wrapper">
+              <select id="queueCategoryFilter" class="queue-category-select">
+                <option value="all">All Categories</option>
+                <option value="image">Images</option>
+                <option value="video">Videos</option>
+                <option value="gif">GIFs</option>
+              </select>
+            </div>
+
+            <div class="queue-filter-select-wrapper">
+              <select id="queueSortSelect" class="queue-category-select">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="title-asc">Title A–Z</option>
+                <option value="title-desc">Title Z–A</option>
+              </select>
+            </div>
+
+            <button id="btnRefreshQueue" class="btn-refresh-queue" title="Refresh from Firestore">
+              <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Moderation Table Container -->
+        <div class="moderation-table-wrapper">
+          <div id="queueLoadingState" class="queue-loading-container" style="display: none;">
+            <div class="admin-spinner"></div>
+            <p>Fetching memes from Cloud Firestore...</p>
+          </div>
+
+          <div id="queueEmptyState" class="queue-empty-container" style="display: none;">
+            <div class="empty-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+            </div>
+            <h3 id="queueEmptyTitle">No memes found in queue</h3>
+            <p id="queueEmptyMessage">No documents match the active filter or the Firestore collection is empty.</p>
+            <button id="btnResetFilters" class="btn-secondary" style="display: none; margin-top: 10px;">Clear
+              Filters</button>
+          </div>
+
+          <!-- Moderation List / Table Header & Rows -->
+          <div id="moderationList" class="moderation-list">
+            <!-- Rendered dynamically by admin.js -->
+          </div>
+
+          <!-- Moderation Pagination Controls (Phase 3) -->
+          <div id="queuePagination" class="moderation-pagination-wrapper" style="display: none;">
+            <div id="queueRangeInfo" class="pagination-range-info">Showing 0 of 0 memes</div>
+            <div class="pagination-controls">
+              <button id="btnPrevPage" class="btn-pagination" disabled title="Previous Page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                <span>Prev</span>
+              </button>
+              <div id="queuePageNumbers" class="pagination-page-numbers">
+                <!-- Page numbers rendered dynamically -->
+              </div>
+              <button id="btnNextPage" class="btn-pagination" disabled title="Next Page">
+                <span>Next</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================================================
+       Edit Meme Modal (Phase 3)
+       ======================================================================== -->
+  <div id="editMemeModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-dialog edit-modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          <span>Edit Meme Details</span>
+        </div>
+        <button id="btnEditModalClose" class="btn-close-modal" title="Close">✕</button>
+      </div>
+
+      <form id="editMemeForm">
+        <div class="modal-body edit-modal-body">
+          <div class="edit-preview-banner">
+            <div id="editPreviewThumb" class="edit-preview-thumb"></div>
+            <div class="edit-preview-details">
+              <div class="meta-row">
+                <span class="meta-label">Meme ID:</span>
+                <code id="editMemeId" class="meta-id">...</code>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Creator:</span>
+                <span id="editMemeCreator" class="meta-name">...</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editMemeTitle">Title</label>
+            <input type="text" id="editMemeTitle" class="form-input" required placeholder="Meme Title" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editMemeCategory">Category / Format</label>
+            <select id="editMemeCategory" class="form-input form-select">
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="gif">GIF</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editMemeTags">Tags (comma-separated)</label>
+            <input type="text" id="editMemeTags" class="form-input" placeholder="funny, viral, gaming" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btnCancelEdit" class="btn-secondary">Cancel</button>
+          <button type="submit" id="btnSaveEdit" class="btn-primary">
+            <span class="btn-text">Save Changes</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       Delete Confirmation Modal (Phase 2.5)
+       ======================================================================== -->
+  <div id="deleteConfirmModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-dialog delete-modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title modal-title-danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Delete Meme Permanently?</span>
+        </div>
+        <button id="btnDeleteModalClose" class="btn-close-modal" title="Close">✕</button>
+      </div>
+
+      <div class="modal-body delete-modal-body">
+        <div class="delete-preview-card">
+          <div id="deletePreviewThumb" class="delete-preview-thumb">
+            <!-- Thumbnail injected dynamically -->
+          </div>
+          <div class="delete-preview-info">
+            <h4 id="deletePreviewTitle" class="delete-preview-title">Meme Title</h4>
+            <div class="delete-preview-meta">
+              <span class="meta-label">Creator:</span>
+              <div class="meta-creator">
+                <img id="deletePreviewAvatar" src="../avatar.jpg" alt="Creator Avatar" class="meta-avatar" />
+                <span id="deletePreviewUploader" class="meta-name">Creator Name</span>
+              </div>
+            </div>
+            <div class="delete-preview-meta">
+              <span class="meta-label">Meme ID:</span>
+              <code id="deletePreviewId" class="meta-id">...</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="delete-warning-banner">
+          <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <div class="warning-text">
+            <strong>Warning:</strong> This action cannot be undone. This document will be permanently deleted from Cloud
+            Firestore.
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnCancelDelete" class="btn-secondary">Cancel</button>
+        <button id="btnConfirmDelete" class="btn-danger-submit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            style="width: 15px; height: 15px;">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          <span class="btn-text">Delete Permanently</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       Toast Notifications
+       ======================================================================== -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- Admin Controller (ES Module) -->
+  <script type="module" src="admin.js"></script>
+</body>
+
+</html>
